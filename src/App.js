@@ -264,7 +264,7 @@ function Table({ columns, data }) {
 
   // We don't want to render all of the rows for this example, so cap
   // it for this use case
-  // const firstPageRows = rows.slice(0, 1000)
+  const firstPageRows = rows.slice(0, 100)
 
   return (
     <>
@@ -297,7 +297,7 @@ function Table({ columns, data }) {
           </tr>
         </thead>
         <tbody {...getTableBodyProps()}>
-          {rows.map((row, i) => {
+          {firstPageRows.map((row, i) => {
             prepareRow(row)
             return (
               <tr {...row.getRowProps()}>
@@ -310,7 +310,7 @@ function Table({ columns, data }) {
         </tbody>
       </table>
       <br />
-      <div>Showing the first 20 results of {rows.length} rows</div>
+      <div>Showing the first 100 results of {rows.length} rows</div>
       <div>
         <pre>
           <code>{JSON.stringify(state.filters, null, 2)}</code>
