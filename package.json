@@ -2,20 +2,30 @@
   "name": "my-app",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://hariprasad-a.github.io/journals",
   "dependencies": {
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
+    "match-sorter": "^6.3.0",
+    "namor": "^2.0.3",
     "react": "^17.0.2",
+    "react-csv-to-table": "0.0.4",
     "react-dom": "^17.0.2",
     "react-scripts": "4.0.3",
+    "react-table": "^7.7.0",
+    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-react": "^2.0.3",
+    "styled-components": "^5.3.0",
     "web-vitals": "^1.1.2"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -34,5 +44,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^3.2.3"
   }
 }
