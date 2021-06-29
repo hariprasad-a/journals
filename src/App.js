@@ -1,10 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
 import { useTable, useFilters, useGlobalFilter, useAsyncDebounce } from 'react-table'
-// A great library for fuzzy filtering/sorting items
-import {matchSorter} from 'match-sorter'
-
-import makeData from './makeData'
 
 const Styles = styled.div`
   padding: 1rem;
@@ -116,109 +112,99 @@ function SelectColumnFilter({
   )
 }
 
-// This is a custom filter UI that uses a
-// slider to set the filter value between a column's
-// min and max values
-function SliderColumnFilter({
-  column: { filterValue, setFilter, preFilteredRows, id },
-}) {
-  // Calculate the min and max
-  // using the preFilteredRows
+// // This is a custom filter UI that uses a
+// // slider to set the filter value between a column's
+// // min and max values
+// function SliderColumnFilter({
+//   column: { filterValue, setFilter, preFilteredRows, id },
+// }) {
+//   // Calculate the min and max
+//   // using the preFilteredRows
 
-  const [min, max] = React.useMemo(() => {
-    let min = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
-    let max = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
-    preFilteredRows.forEach(row => {
-      min = Math.min(row.values[id], min)
-      max = Math.max(row.values[id], max)
-    })
-    return [min, max]
-  }, [id, preFilteredRows])
+//   const [min, max] = React.useMemo(() => {
+//     let min = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
+//     let max = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
+//     preFilteredRows.forEach(row => {
+//       min = Math.min(row.values[id], min)
+//       max = Math.max(row.values[id], max)
+//     })
+//     return [min, max]
+//   }, [id, preFilteredRows])
 
-  return (
-    <>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        value={filterValue || min}
-        onChange={e => {
-          setFilter(parseInt(e.target.value, 10))
-        }}
-      />
-      <button onClick={() => setFilter(undefined)}>Off</button>
-    </>
-  )
-}
+//   return (
+//     <>
+//       <input
+//         type="range"
+//         min={min}
+//         max={max}
+//         value={filterValue || min}
+//         onChange={e => {
+//           setFilter(parseInt(e.target.value, 10))
+//         }}
+//       />
+//       <button onClick={() => setFilter(undefined)}>Off</button>
+//     </>
+//   )
+// }
 
-// This is a custom UI for our 'between' or number range
-// filter. It uses two number boxes and filters rows to
-// ones that have values between the two
-function NumberRangeColumnFilter({
-  column: { filterValue = [], preFilteredRows, setFilter, id },
-}) {
-  const [min, max] = React.useMemo(() => {
-    let min = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
-    let max = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
-    preFilteredRows.forEach(row => {
-      min = Math.min(row.values[id], min)
-      max = Math.max(row.values[id], max)
-    })
-    return [min, max]
-  }, [id, preFilteredRows])
+// // This is a custom UI for our 'between' or number range
+// // filter. It uses two number boxes and filters rows to
+// // ones that have values between the two
+// function NumberRangeColumnFilter({
+//   column: { filterValue = [], preFilteredRows, setFilter, id },
+// }) {
+//   const [min, max] = React.useMemo(() => {
+//     let min = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
+//     let max = preFilteredRows.length ? preFilteredRows[0].values[id] : 0
+//     preFilteredRows.forEach(row => {
+//       min = Math.min(row.values[id], min)
+//       max = Math.max(row.values[id], max)
+//     })
+//     return [min, max]
+//   }, [id, preFilteredRows])
 
-  return (
-    <div
-      style={{
-        display: 'flex',
-      }}
-    >
-      <input
-        value={filterValue[0] || ''}
-        type="number"
-        onChange={e => {
-          const val = e.target.value
-          setFilter((old = []) => [val ? parseInt(val, 10) : undefined, old[1]])
-        }}
-        placeholder={`Min (${min})`}
-        style={{
-          width: '70px',
-          marginRight: '0.5rem',
-        }}
-      />
-      to
-      <input
-        value={filterValue[1] || ''}
-        type="number"
-        onChange={e => {
-          const val = e.target.value
-          setFilter((old = []) => [old[0], val ? parseInt(val, 10) : undefined])
-        }}
-        placeholder={`Max (${max})`}
-        style={{
-          width: '70px',
-          marginLeft: '0.5rem',
-        }}
-      />
-    </div>
-  )
-}
+//   return (
+//     <div
+//       style={{
+//         display: 'flex',
+//       }}
+//     >
+//       <input
+//         value={filterValue[0] || ''}
+//         type="number"
+//         onChange={e => {
+//           const val = e.target.value
+//           setFilter((old = []) => [val ? parseInt(val, 10) : undefined, old[1]])
+//         }}
+//         placeholder={`Min (${min})`}
+//         style={{
+//           width: '70px',
+//           marginRight: '0.5rem',
+//         }}
+//       />
+//       to
+//       <input
+//         value={filterValue[1] || ''}
+//         type="number"
+//         onChange={e => {
+//           const val = e.target.value
+//           setFilter((old = []) => [old[0], val ? parseInt(val, 10) : undefined])
+//         }}
+//         placeholder={`Max (${max})`}
+//         style={{
+//           width: '70px',
+//           marginLeft: '0.5rem',
+//         }}
+//       />
+//     </div>
+//   )
+// }
 
-function fuzzyTextFilterFn(rows, id, filterValue) {
-  return matchSorter(rows, filterValue, { keys: [row => row.values[id]] })
-}
-
-// Let the table remove the filter if the string is empty
-fuzzyTextFilterFn.autoRemove = val => !val
 
 // Our table component
 function Table({ columns, data }) {
   const filterTypes = React.useMemo(
     () => ({
-      // Add a new fuzzyTextFilterFn filter type.
-      fuzzyText: fuzzyTextFilterFn,
-      // Or, override the default text filter to use
-      // "startWith"
       text: (rows, id, filterValue) => {
         return rows.filter(row => {
           const rowValue = row.values[id]
@@ -264,11 +250,11 @@ function Table({ columns, data }) {
 
   // We don't want to render all of the rows for this example, so cap
   // it for this use case
-  const firstPageRows = rows.slice(0, 1000)
+  const firstPageRows = rows.slice(0, 500)
 
   return (
     <>
-      <table {...getTableProps()}>
+      <table class="fixed" {...getTableProps()}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -310,7 +296,7 @@ function Table({ columns, data }) {
         </tbody>
       </table>
       <br />
-      <div>Showing the first 1000 results of {rows.length} rows</div>
+      <div>Showing the first 500 results of {rows.length} rows</div>
       <div>
         <pre>
           <code>{JSON.stringify(state.filters, null, 2)}</code>
@@ -347,14 +333,12 @@ function App() {
           {
             Header: 'Publisher',
             accessor: 'Publisher',
-            // Use our custom `fuzzyText` filter on this column
-            filter: 'fuzzyText',
           },        
           {
             Header: 'ABDC Ranking',
             accessor: 'ABDC ranking',
             Filter: SelectColumnFilter,
-            filter: 'includes',
+            filter: 'equals',
           },
           {
             Header: 'Scopus listed',
@@ -368,7 +352,7 @@ function App() {
     []
   )
 
-  const data = React.useMemo(() => require('./data.json'))
+  const data = React.useMemo(() => require('./data.json'), [])
 
   return (
     <Styles>
