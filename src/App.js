@@ -1,28 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
-import 'bootstrap/dist/css/bootstrap.min.css';
-
-import BTable from 'react-bootstrap/Table';
 import { useTable, useFilters, useGlobalFilter, useAsyncDebounce, usePagination} from 'react-table'
 
 const Styles = styled.div`
-  /* This is required to make the table full-width */
-  display: block;
-  max-width: 100%;
-
-  /* This will make the table scrollable when it gets too small */
-  .tableWrap {
-    display: block;
-    max-width: 100%;
-    overflow-x: scroll;
-    overflow-y: hidden;
-    border-bottom: 1px solid black;
-  }
+  padding: 1rem;
 
   table {
-    /* Make sure the inner table is always as wide as needed */
-    width: 100%;
     border-spacing: 0;
+    border: 1px solid black;
 
     tr {
       :last-child {
@@ -38,14 +23,6 @@ const Styles = styled.div`
       padding: 0.5rem;
       border-bottom: 1px solid black;
       border-right: 1px solid black;
-
-      /* The secret sauce */
-      /* Each cell should grow equally */
-      width: 1%;
-      /* But "collapsed" cells should be as small as possible */
-      &.collapse {
-        width: 0.0000000001%;
-      }
 
       :last-child {
         border-right: 0;
@@ -288,7 +265,7 @@ function Table({ columns, data }) {
 
   return (
     <>
-      <BTable striped bordered hover size="sm" {...getTableProps()}>
+      <table class="fixed" {...getTableProps()}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
@@ -328,7 +305,7 @@ function Table({ columns, data }) {
             )
           })}
         </tbody>
-      </BTable>
+      </table>
       <br />
       <div className="pagination">
         <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
