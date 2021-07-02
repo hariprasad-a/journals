@@ -5,27 +5,7 @@ import { useTable, useFilters, useGlobalFilter, useAsyncDebounce, usePagination}
 const Styles = styled.div`
   /* This is required to make the table full-width */
 
-  table {
-    /* Make sure the inner table is always as wide as needed */    
-
-    th,
-    td {
-      margin: 0;
-      padding: 0.75rem;
-
-      /* The secret sauce */
-      /* Each cell should grow equally */
-      width: 1%;
-      /* But "collapsed" cells should be as small as possible */
-      &.collapse {
-        width: 0.0000000001%;
-      }
-    }
-  }
-
-  .pagination {
-    padding: 0.5rem;
-  }
+  
 `
 
 // Define a default UI for filtering
@@ -44,7 +24,7 @@ function GlobalFilter({
     <span>
       Search:{' '}
       <input
-      class="shadow appearance-none border rounded py-0.95 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+      class="shadow appearance-none border rounded py-0.95 px-3 text-blue-700 leading-tight focus:outline-none focus:shadow-outline"
         value={value || ""}
         onChange={e => {
           setValue(e.target.value);
@@ -67,9 +47,9 @@ function DefaultColumnFilter({
   const count = preFilteredRows.length
 
   return (
-    <div class="relative inline-block w-full text-gray-700">
+    <div class="relative inline-block w-full text-blue-700">
     <input
-      class="shadow appearance-none border rounded py-1 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+      class="shadow appearance-none border rounded py-1 px-3 text-blue-700 leading-tight focus:outline-none focus:shadow-outline"
       value={filterValue || ''}
       onChange={e => {
         setFilter(e.target.value || undefined) // Set undefined to remove the filter entirely
@@ -97,9 +77,9 @@ function SelectColumnFilter({
 
   // Render a multi-select box
   return (
-    <div class="relative inline-block w-full text-gray-700">
+    <div class="relative inline-block w-full text-blue-700">
     <select
-      class="pl-3 pr-3 py-0.95 px-3 text-base placeholder-gray-600 border rounded-lg focus:shadow-outline"
+      class="bg-blue-50 hover:bg-blue-100 text-blue-800 py-1 px-4 border border-blue-400 rounded shadow"
       value={filterValue}
       onChange={e => {
         setFilter(e.target.value || undefined)
@@ -176,13 +156,12 @@ function Table({ columns, data }) {
 
   return (
     <Styles>
-      <div>
       <table class="table-auto" {...getTableProps()}>
         <thead>
           {headerGroups.map(headerGroup => (
             <tr {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map(column => (
-                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider" {...column.getHeaderProps()}>
+                <th class="px-5 py-2.5 border-b-2 border-blue-200 bg-blue-100 text-center text-xs font-semibold text-blue-600 uppercase tracking-wider" {...column.getHeaderProps()}>
                   {column.render('Header')}
                   {/* Render the columns filter UI */}
                   <div>{column.canFilter ? column.render('Filter') : null}</div>
@@ -191,7 +170,7 @@ function Table({ columns, data }) {
             </tr>
           ))}
           <tr>
-            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider"
+            <th class="px-5 py-2.5 border-b-2 border-blue-200 bg-blue-100 text-center text-xs font-semibold text-blue-600 uppercase tracking-wider"
               colSpan={visibleColumns.length}
               style={{
                 textAlign: 'left',
@@ -211,25 +190,26 @@ function Table({ columns, data }) {
             return (
               <tr {...row.getRowProps()}>
                 {row.cells.map(cell => {
-                  return <td class="px-5 py-5 text-center border-b border-gray-200 bg-white text-sm w-2/5" {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                  return <td class="px-5 py-2.5 text-center border-b border-blue-200 bg-white text-sm w-2/5" {...cell.getCellProps()}>{cell.render('Cell')}</td>
                 })}
               </tr>
             )
           })}
-        </tbody>
-      </table>
-      </div>
-      <div class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
-        <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1 px-4 border border-gray-400 rounded shadow disabled:opacity-50" onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
+        
+      
+      <tr>
+      <td colspan="4">
+      <div class="w-full px-5 py-2.5 border-b-2 border-blue-200 bg-blue-100 text-center text-xs font-semibold text-blue-600 uppercase tracking-wider">
+        <button class="bg-white hover:bg-blue-100 text-blue-800 font-semibold py-1 px-4 border border-blue-400 rounded shadow disabled:opacity-50" onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
           {'<<'}
         </button>{' '}
-        <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1 px-4 border border-gray-400 rounded shadow disabled:opacity-50" onClick={() => previousPage()} disabled={!canPreviousPage}>
+        <button class="bg-white hover:bg-blue-100 text-blue-800 font-semibold py-1 px-4 border border-blue-400 rounded shadow disabled:opacity-50" onClick={() => previousPage()} disabled={!canPreviousPage}>
           {'<'}
         </button>{' '}
-        <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1 px-4 border border-gray-400 rounded shadow disabled:opacity-50" onClick={() => nextPage()} disabled={!canNextPage}>
+        <button class="bg-white hover:bg-blue-100 text-blue-800 font-semibold py-1 px-4 border border-blue-400 rounded shadow disabled:opacity-50" onClick={() => nextPage()} disabled={!canNextPage}>
           {'>'}
         </button>{' '}
-        <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-1 px-4 border border-gray-400 rounded shadow disabled:opacity-50" onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
+        <button class="bg-white hover:bg-blue-100 text-blue-800 font-semibold py-1 px-4 border border-blue-400 rounded shadow disabled:opacity-50" onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
           {'>>'}
         </button>{' '}
         <span>
@@ -241,7 +221,7 @@ function Table({ columns, data }) {
         <span>
           | Go to page:{' '}
           <input
-            class="shadow appearance-none border rounded w-full py-1 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+            class="shadow appearance-none border rounded w-full py-1 px-3 text-blue-700 leading-tight focus:outline-none focus:shadow-outline" 
             type="number"
             defaultValue={pageIndex + 1}
             onChange={e => {
@@ -251,9 +231,9 @@ function Table({ columns, data }) {
             style={{ width: '100px' }}
           />
         </span>{' '}
-        <span class="border-spacing:1">
+        <span class="mx-3">
           <select
-          class="bg-white hover:bg-gray-100 text-gray-800 py-1 px-4 border border-gray-400 rounded shadow"
+          class="bg-white hover:bg-blue-100 text-blue-800 py-1 px-4 border border-blue-400 rounded shadow"
             value={pageSize}
             onChange={e => {
               setPageSize(Number(e.target.value))
@@ -267,6 +247,10 @@ function Table({ columns, data }) {
           </select>
         </span>
       </div>
+      </td>
+      </tr>
+      </tbody>
+      </table>
     </Styles>
   )
 }
