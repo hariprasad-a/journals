@@ -5,6 +5,9 @@ module.exports = {
     extend: {},
   },
   variants: {
+    textColor: ['responsive', 'hover', 'focus', 'group-hover'],
+    border: ['hover', 'focus'],
+    backgroundColor: ['active', 'hover'],
     opacity: ({ after }) => after(['disabled'])
   },
   plugins: [],
