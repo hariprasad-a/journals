@@ -20,7 +20,7 @@ export default function SelectFilter({ column }) {
     <select
       value={column.getFilterValue() ?? ''}
       onChange={e => column.setFilterValue(e.target.value || undefined)}
-      className="w-full mt-1 px-2 py-1 text-xs bg-surface border border-border rounded-md text-text-secondary focus:outline-none focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
+      className="w-full md:mt-1 px-2 py-2 md:py-1 text-xs bg-surface border border-border rounded-md md:rounded-md rounded-lg text-text-secondary focus:outline-none focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
     >
       <option value="">All</option>
       {sortedUniqueValues.map(val => (

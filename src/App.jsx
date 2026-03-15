@@ -64,10 +64,11 @@ function AppContent() {
     {
       accessorKey: 'Title',
       header: 'Journal',
-      size: 400,
+      size: 446,
       cell: ({ row }) => {
         const title = row.original.Title
         const url = row.original.homepage_url
+        const issn = row.original.issn
         return (
           <div className="overflow-hidden">
             <div className="font-medium text-text leading-snug truncate">
@@ -77,7 +78,10 @@ function AppContent() {
                 </a>
               ) : title}
             </div>
-            <div className="text-xs text-text-muted mt-0.5 truncate">{row.original.Publisher}</div>
+            <div className="text-xs text-text-muted mt-0.5 truncate">
+              {row.original.Publisher}
+              {issn && <><span className="mx-1.5 text-border">|</span><span className="font-mono opacity-70">ISSN {issn}</span></>}
+            </div>
           </div>
         )
       },
@@ -85,7 +89,7 @@ function AppContent() {
     {
       accessorKey: 'ABDC ranking',
       header: 'ABDC',
-      size: 80,
+      size: 86,
       filterFn: 'equals',
       Filter: SelectFilter,
       cell: RankingBadge,
@@ -93,7 +97,7 @@ function AppContent() {
     {
       accessorKey: 'scopus',
       header: 'Scopus',
-      size: 80,
+      size: 86,
       filterFn: 'equals',
       Filter: SelectFilter,
       cell: ScopusBadge,
@@ -101,7 +105,7 @@ function AppContent() {
     {
       accessorKey: 'citescore',
       header: 'CiteScore',
-      size: 100,
+      size: 96,
       cell: ({ row }) => {
         const cs = row.original.citescore
         const pct = row.original.highest_percentile
@@ -119,16 +123,13 @@ function AppContent() {
     {
       accessorKey: 'issn',
       header: 'ISSN',
-      size: 120,
       enableColumnFilter: false,
-      cell: ({ getValue }) => (
-        <span className="text-sm text-text-secondary font-mono">{getValue() || '-'}</span>
-      ),
+      meta: { hidden: true },
     },
     {
       accessorKey: 'subject_area',
       header: 'Subject',
-      size: 180,
+      size: 246,
       cell: ({ getValue }) => (
         <span className="text-sm text-text-secondary block truncate">{getValue() || '-'}</span>
       ),
@@ -161,25 +162,25 @@ function AppContent() {
     ]
     const categories = d.categories
     return (
-      <div className="px-4 py-3 space-y-2">
-        <div className="flex flex-wrap gap-x-6 gap-y-1">
+      <div className="px-3 sm:px-4 py-3 space-y-2">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-6 gap-y-1">
           {metrics.map(({ label, value }) => (
-            <div key={label} className="flex items-center gap-1.5 text-sm">
+            <div key={label} className="flex items-center gap-1.5 text-xs sm:text-sm">
               <span className="text-text-muted">{label}:</span>
               <span className="font-medium text-text tabular-nums">{value ?? '-'}</span>
             </div>
           ))}
         </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-1">
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-x-6 gap-y-1">
           {details.map(({ label, value }) => (
-            <div key={label} className="flex items-center gap-1.5 text-sm">
+            <div key={label} className="flex items-center gap-1.5 text-xs sm:text-sm">
               <span className="text-text-muted">{label}:</span>
               <span className="font-medium text-text">{value ?? '-'}</span>
             </div>
           ))}
         </div>
         {categories && (
-          <div className="text-sm">
+          <div className="text-xs sm:text-sm">
             <span className="text-text-muted">Categories: </span>
             <span className="text-text-secondary">{categories}</span>
           </div>
@@ -191,19 +192,19 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-surface-alt">
       <header className="bg-surface border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-text tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-text tracking-tight">
               Academic Journals Directory
             </h1>
-            <p className="mt-1 text-sm text-text-secondary">
+            <p className="mt-1 text-xs sm:text-sm text-text-secondary">
               {data.length.toLocaleString()} journals with ABDC rankings and indexing status
             </p>
           </div>
           <ThemeToggle />
         </div>
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
         <JournalTable data={data} columns={columns} renderExpandedRow={renderExpandedRow} />
       </main>
     </div>
