@@ -58,12 +58,9 @@ function MobileCard({ row, columns: visibleColumns, isExpanded, onToggle, render
             </div>
           ))}
         </div>
-        {/* Subject + ISSN */}
-        {(d.subject_area || d.issn) && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 text-xs text-text-secondary">
-            {d.subject_area && <span>{d.subject_area}</span>}
-            {d.issn && <span className="font-mono">{d.issn}</span>}
-          </div>
+        {/* Subject */}
+        {d.subject_area && (
+          <div className="text-xs text-text-secondary">{d.subject_area}</div>
         )}
       </div>
       {isExpanded && renderExpandedRow && (
