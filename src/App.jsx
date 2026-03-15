@@ -60,6 +60,14 @@ function ThemeToggle() {
   )
 }
 
+const RANKING_ORDER = { 'A*': 0, 'A': 1, 'B': 2, 'C': 3 }
+
+function rankingSortFn(rowA, rowB, columnId) {
+  const a = RANKING_ORDER[rowA.getValue(columnId)] ?? 4
+  const b = RANKING_ORDER[rowB.getValue(columnId)] ?? 4
+  return a - b
+}
+
 function numericCompareFilter(row, columnId, filterValue) {
   const cell = row.getValue(columnId)
   if (cell == null) return false
@@ -110,6 +118,7 @@ function AppContent() {
       accessorKey: 'ABDC ranking',
       header: 'ABDC',
       size: 86,
+      sortingFn: rankingSortFn,
       filterFn: 'equals',
       Filter: SelectFilter,
       cell: RankingBadge,
