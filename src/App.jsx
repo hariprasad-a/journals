@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import data from './data.json'
 import JournalTable from './components/JournalTable'
 import SelectFilter from './components/SelectFilter'
+import MultiSelectFilter from './components/MultiSelectFilter'
 import { ThemeProvider, useTheme } from './components/ThemeContext'
 
 function RankingBadge({ getValue }) {
@@ -59,6 +60,21 @@ function ThemeToggle() {
   )
 }
 
+function numericCompareFilter(row, columnId, filterValue) {
+  const cell = row.getValue(columnId)
+  if (cell == null) return false
+  const { operator = '=', value } = filterValue
+  const num = parseFloat(value)
+  if (isNaN(num)) return true
+  switch (operator) {
+    case '>':  return cell > num
+    case '>=': return cell >= num
+    case '<':  return cell < num
+    case '<=': return cell <= num
+    default:   return cell === num
+  }
+}
+
 function AppContent() {
   const columns = useMemo(() => [
     {
@@ -70,18 +86,22 @@ function AppContent() {
         const url = row.original.homepage_url
         const issn = row.original.issn
         return (
-          <div className="overflow-hidden">
-            <div className="font-medium text-text leading-snug truncate">
-              {url ? (
-                <a href={url} target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 hover:underline transition-colors" onClick={e => e.stopPropagation()}>
-                  {title}
-                </a>
-              ) : title}
+          <div className="flex items-start gap-2 overflow-hidden">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-text leading-snug truncate">{title}</div>
+              <div className="text-xs text-text-muted mt-0.5 truncate">
+                {row.original.Publisher}
+                {issn && <><span className="mx-1.5 text-border">|</span><span className="font-mono opacity-70">ISSN {issn}</span></>}
+              </div>
             </div>
-            <div className="text-xs text-text-muted mt-0.5 truncate">
-              {row.original.Publisher}
-              {issn && <><span className="mx-1.5 text-border">|</span><span className="font-mono opacity-70">ISSN {issn}</span></>}
-            </div>
+            {url && (
+              <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex-none mt-0.5 inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-primary-600 bg-primary-50 ring-1 ring-inset ring-primary-200 hover:bg-primary-100 hover:text-primary-700 dark:text-primary-300 dark:bg-primary-500/20 dark:ring-primary-400/30 dark:hover:bg-primary-500/30 dark:hover:text-primary-200 transition-colors" title="Visit journal homepage">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Visit
+              </a>
+            )}
           </div>
         )
       },
@@ -106,6 +126,7 @@ function AppContent() {
       accessorKey: 'citescore',
       header: 'CiteScore',
       size: 96,
+      filterFn: numericCompareFilter,
       cell: ({ row }) => {
         const cs = row.original.citescore
         const pct = row.original.highest_percentile
@@ -121,18 +142,85 @@ function AppContent() {
       },
     },
     {
+      accessorKey: 'h_index',
+      header: 'H-Index',
+      filterFn: numericCompareFilter,
+      meta: { hidden: true },
+    },
+    {
+      accessorKey: 'highest_percentile',
+      header: 'Percentile',
+      filterFn: numericCompareFilter,
+      meta: { hidden: true },
+    },
+    {
       accessorKey: 'issn',
       header: 'ISSN',
       enableColumnFilter: false,
       meta: { hidden: true },
     },
     {
+      accessorKey: 'country',
+      header: 'Country',
+      filterFn: 'includesString',
+      meta: { hidden: true },
+    },
+    {
+      accessorKey: 'Publisher',
+      header: 'Publisher',
+      filterFn: 'includesString',
+      meta: { hidden: true, filterOnly: true },
+    },
+    {
+      accessorKey: 'sjr_quartile',
+      header: 'Quartile',
+      filterFn: 'equals',
+      meta: { hidden: true },
+    },
+    {
+      accessorKey: 'type',
+      header: 'Type',
+      filterFn: 'equals',
+      meta: { hidden: true },
+    },
+    {
+      accessorKey: 'language',
+      header: 'Language',
+      filterFn: 'includesString',
+      meta: { hidden: true },
+    },
+    {
+      accessorKey: 'is_oa',
+      header: 'Open Access',
+      filterFn: 'equals',
+      meta: { hidden: true },
+    },
+    {
       accessorKey: 'subject_area',
       header: 'Subject',
       size: 246,
-      cell: ({ getValue }) => (
-        <span className="text-sm text-text-secondary block truncate">{getValue() || '-'}</span>
-      ),
+      filterFn: (row, columnId, filterValue) => {
+        const cellValue = row.getValue(columnId)
+        if (!Array.isArray(filterValue) || filterValue.length === 0) return true
+        if (!Array.isArray(cellValue)) return false
+        return filterValue.some(v => cellValue.includes(v))
+      },
+      Filter: MultiSelectFilter,
+      cell: ({ getValue }) => {
+        const subjects = getValue()
+        if (!Array.isArray(subjects) || subjects.length === 0) {
+          return <span className="text-text-muted">-</span>
+        }
+        return (
+          <div className="flex flex-wrap gap-1">
+            {subjects.map(s => (
+              <span key={s} className="inline-block px-1.5 py-0.5 text-xs rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {s}
+              </span>
+            ))}
+          </div>
+        )
+      },
     },
   ], [])
 

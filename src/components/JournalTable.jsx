@@ -29,18 +29,22 @@ function MobileCard({ row, columns: visibleColumns, isExpanded, onToggle, render
     >
       <div className="px-4 py-3 space-y-2">
         {/* Title + Publisher */}
-        <div className="overflow-hidden">
-          <div className="font-medium text-text leading-snug">
-            {d.homepage_url ? (
-              <a href={d.homepage_url} target="_blank" rel="noopener noreferrer" className="hover:text-primary-500 hover:underline transition-colors" onClick={e => e.stopPropagation()}>
-                {d.Title}
-              </a>
-            ) : d.Title}
+        <div className="flex items-start gap-2 overflow-hidden">
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-text leading-snug">{d.Title}</div>
+            <div className="text-xs text-text-muted mt-0.5">
+              {d.Publisher}
+              {d.issn && <><span className="mx-1.5 text-border">|</span><span className="font-mono opacity-70">ISSN {d.issn}</span></>}
+            </div>
           </div>
-          <div className="text-xs text-text-muted mt-0.5">
-            {d.Publisher}
-            {d.issn && <><span className="mx-1.5 text-border">|</span><span className="font-mono opacity-70">ISSN {d.issn}</span></>}
-          </div>
+          {d.homepage_url && (
+            <a href={d.homepage_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="flex-none mt-0.5 inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-primary-600 bg-primary-50 ring-1 ring-inset ring-primary-200 hover:bg-primary-100 hover:text-primary-700 dark:text-primary-300 dark:bg-primary-500/20 dark:ring-primary-400/30 dark:hover:bg-primary-500/30 dark:hover:text-primary-200 transition-colors" title="Visit journal homepage">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Visit
+            </a>
+          )}
         </div>
         {/* Badges row */}
         <div className="flex flex-wrap items-center gap-3">
@@ -59,8 +63,14 @@ function MobileCard({ row, columns: visibleColumns, isExpanded, onToggle, render
           ))}
         </div>
         {/* Subject */}
-        {d.subject_area && (
-          <div className="text-xs text-text-secondary">{d.subject_area}</div>
+        {Array.isArray(d.subject_area) && d.subject_area.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {d.subject_area.map(s => (
+              <span key={s} className="inline-block px-1.5 py-0.5 text-xs rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {s}
+              </span>
+            ))}
+          </div>
         )}
       </div>
       {isExpanded && renderExpandedRow && (
@@ -119,7 +129,7 @@ export default function JournalTable({ data, columns, renderExpandedRow }) {
       {/* Desktop table */}
       <div className="hidden md:block bg-surface rounded-xl border border-border shadow-sm">
         {/* Sticky header table */}
-        <div className="sticky top-0 z-10 rounded-t-xl overflow-hidden">
+        <div className="sticky top-0 z-10 rounded-t-xl overflow-visible">
           <table className="w-full" style={{ tableLayout: 'fixed' }}>
             <colgroup>
               {table.getVisibleLeafColumns().map(col => (
@@ -132,7 +142,7 @@ export default function JournalTable({ data, columns, renderExpandedRow }) {
                   {headerGroup.headers.map(header => (
                     <th
                       key={header.id}
-                      className="bg-surface-alt px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider"
+                      className="bg-surface-alt px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider first:rounded-tl-xl last:rounded-tr-xl"
                     >
                       {header.isPlaceholder ? null : (
                         <div>
