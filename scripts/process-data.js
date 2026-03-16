@@ -228,26 +228,40 @@ function loadScopusIndex() {
 
   const byIssn = new Map()
   const byTitle = new Map()
+  const allRows = []
 
   for (const r of rows) {
+    const title = titleCol ? String(r[titleCol]).trim() : ''
+    const issn = issnCol ? String(r[issnCol]).trim() : ''
+    const eissn = eissnCol ? String(r[eissnCol]).trim() : ''
+    const active = activeCol ? String(r[activeCol]).trim() : null
+    const coverage = coverageCol ? String(r[coverageCol]).trim() || null : null
+    const source_type = sourceTypeCol ? String(r[sourceTypeCol]).trim() || null : null
+    const language = langCol ? String(r[langCol]).trim() || null : null
+    const publisher = publisherCol ? String(r[publisherCol]).trim() || null : null
+    const asjc_codes = asjcCol ? String(r[asjcCol]).trim() || null : null
+    const scopus_oa = oaCol ? !!String(r[oaCol]).trim() : null
+
     const entry = {
       scopus: true,
-      active: activeCol ? String(r[activeCol]).trim() : null,
-      coverage: coverageCol ? String(r[coverageCol]).trim() || null : null,
-      source_type: sourceTypeCol ? String(r[sourceTypeCol]).trim() || null : null,
-      scopus_oa: oaCol ? !!String(r[oaCol]).trim() : null,
-      language: langCol ? String(r[langCol]).trim() || null : null,
-      scopus_publisher: publisherCol ? String(r[publisherCol]).trim() || null : null,
-      asjc_codes: asjcCol ? String(r[asjcCol]).trim() || null : null,
+      active,
+      coverage,
+      source_type,
+      scopus_oa,
+      language,
+      scopus_publisher: publisher,
+      asjc_codes,
     }
 
-    if (issnCol && r[issnCol]) byIssn.set(normalizeIssn(String(r[issnCol])), entry)
-    if (eissnCol && r[eissnCol]) byIssn.set(normalizeIssn(String(r[eissnCol])), entry)
-    if (titleCol) byTitle.set(normalize(r[titleCol]), entry)
+    allRows.push({ title, issn, eissn, active, coverage, source_type, language, publisher, asjc_codes, scopus_oa })
+
+    if (issn) byIssn.set(normalizeIssn(issn), entry)
+    if (eissn) byIssn.set(normalizeIssn(eissn), entry)
+    if (title) byTitle.set(normalize(title), entry)
   }
 
-  console.log(`Scopus index: ${byIssn.size} ISSNs, ${byTitle.size} titles`)
-  return { byIssn, byTitle }
+  console.log(`Scopus index: ${byIssn.size} ISSNs, ${byTitle.size} titles, ${allRows.length} total rows`)
+  return { byIssn, byTitle, rows: allRows }
 }
 
 function findScopus(entry, scopus) {
@@ -364,7 +378,7 @@ async function main() {
       entry.sjr = sci.sjr
       entry.sjr_quartile = sci.sjr_quartile
       entry.country = sci.country
-      entry.subject_area = sci.areas
+      entry.subject_area = sci.areas ? sci.areas.split(';').map(s => s.trim()).filter(Boolean) : null
       entry.categories = sci.categories
       entry.cites_per_doc_2yr = sci.cites_per_doc_2yr
       entry.total_citations_3yr = sci.total_citations_3yr
@@ -445,7 +459,7 @@ async function main() {
 
     // Use FoR name as subject_area fallback when Scopus/SCImago didn't provide one
     if (!entry.subject_area && entry.for_name) {
-      entry.subject_area = entry.for_name
+      entry.subject_area = [entry.for_name]
     }
 
     // Use ABDC ISSN as fallback, keep online ISSN too
@@ -464,12 +478,117 @@ async function main() {
     }
   }
 
+  // Step 4: Add unmatched active Scopus journals
+  const existingIssns = new Set()
+  const existingTitles = new Set()
+  for (const r of results) {
+    if (r.issn) existingIssns.add(normalizeIssn(r.issn))
+    if (r.issn_online) existingIssns.add(normalizeIssn(r.issn_online))
+    existingTitles.add(normalize(r.Title))
+  }
+
+  let scopusOnlyCount = 0
+  if (scopus.rows) {
+    for (const row of scopus.rows) {
+      if (row.active !== 'Active' || row.source_type !== 'Journal') continue
+
+      const issn = normalizeIssn(row.issn)
+      const eissn = normalizeIssn(row.eissn)
+      if ((issn && existingIssns.has(issn)) || (eissn && existingIssns.has(eissn))) continue
+      if (existingTitles.has(normalize(row.title))) continue
+
+      const entry = {
+        Title: row.title,
+        Publisher: row.publisher || null,
+        'ABDC ranking': null,
+        scopus: 'True',
+        scopus_active: 'Active',
+        coverage: row.coverage,
+        source_type: row.source_type,
+        language: row.language,
+        issn: row.issn || null,
+        issn_online: row.eissn || null,
+        for_code: null,
+        for_name: null,
+        year_inception: null,
+        abdc_2022: null,
+      }
+
+      // SCImago enrichment
+      const sci = findScimago(entry, scimago)
+      if (sci) {
+        entry.h_index = sci.h_index
+        entry.sjr = sci.sjr
+        entry.sjr_quartile = sci.sjr_quartile
+        entry.country = sci.country
+        entry.subject_area = sci.areas ? sci.areas.split(';').map(s => s.trim()).filter(Boolean) : null
+        entry.categories = sci.categories
+        entry.cites_per_doc_2yr = sci.cites_per_doc_2yr
+        entry.total_citations_3yr = sci.total_citations_3yr
+        entry.total_docs = sci.total_docs
+        entry.type = sci.type
+        entry.is_oa = sci.is_oa
+      } else {
+        entry.h_index = null
+        entry.sjr = null
+        entry.sjr_quartile = null
+        entry.country = null
+        entry.subject_area = null
+        entry.categories = null
+        entry.cites_per_doc_2yr = null
+        entry.total_citations_3yr = null
+        entry.total_docs = null
+        entry.type = null
+        entry.is_oa = null
+      }
+
+      // CiteScore enrichment
+      const cs = findCiteScore(entry, citescore)
+      if (cs) {
+        entry.citescore = cs.citescore
+        entry.highest_percentile = cs.highest_percentile
+        entry.percentile_category = cs.percentile_category
+      } else {
+        entry.citescore = null
+        entry.highest_percentile = null
+        entry.percentile_category = null
+      }
+
+      // OpenAlex enrichment
+      const oa = findOpenAlex(entry, openalex)
+      if (oa) {
+        if (entry.h_index == null && oa.h_index != null) entry.h_index = oa.h_index
+        if (!entry.country && oa.country_code) entry.country = oa.country_code
+        entry.homepage_url = oa.homepage_url || null
+        entry.works_count = oa.works_count
+        entry.cited_by_count = oa.cited_by_count
+        entry.mean_citedness_2yr = oa.mean_citedness_2yr
+      } else {
+        entry.homepage_url = null
+        entry.works_count = null
+        entry.cited_by_count = null
+        entry.mean_citedness_2yr = null
+      }
+
+      // Track ISSNs to avoid duplicates within Scopus-only additions
+      if (issn) existingIssns.add(issn)
+      if (eissn) existingIssns.add(eissn)
+      existingTitles.add(normalize(row.title))
+
+      results.push(entry)
+      scopusOnlyCount++
+    }
+    console.log(`Added ${scopusOnlyCount} Scopus-only active journals`)
+  }
+
   writeFileSync(DATA_PATH, JSON.stringify(results, null, 2))
   console.log(`Done. Wrote ${results.length} entries to ${DATA_PATH}`)
-  console.log(`  SCImago matched: ${scimagoHits}/${journals.length}`)
-  console.log(`  Scopus matched: ${scopusHits}/${journals.length}`)
-  console.log(`  CiteScore matched: ${citescoreHits}/${journals.length}${citescore.source ? ` (source: ${citescore.source})` : ''}`)
-  console.log(`  OpenAlex matched: ${openalexHits}/${journals.length}`)
+  console.log(`  ABDC journals: ${journals.length}`)
+  console.log(`  Scopus-only journals: ${scopusOnlyCount}`)
+  console.log(`  SCImago matched: ${scimagoHits}/${journals.length} (ABDC)`)
+  console.log(`  Scopus matched: ${scopusHits}/${journals.length} (ABDC)`)
+  console.log(`  CiteScore matched: ${citescoreHits}/${journals.length} (ABDC)${citescore.source ? ` (source: ${citescore.source})` : ''}`)
+  console.log(`  OpenAlex matched: ${openalexHits}/${journals.length} (ABDC)`)
 }
 
 main()
