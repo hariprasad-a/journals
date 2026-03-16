@@ -150,16 +150,8 @@ function AppContent() {
       filterFn: numericCompareFilter,
       cell: ({ row }) => {
         const pct = row.original.highest_percentile
-        const cs = row.original.citescore
         if (pct == null) return <span className="text-text-muted">-</span>
-        return (
-          <div>
-            <span className="font-semibold text-text tabular-nums">{pct}</span>
-            {cs != null && (
-              <span className="ml-1.5 text-xs text-text-muted">CS {cs}</span>
-            )}
-          </div>
-        )
+        return <span className="font-semibold text-text tabular-nums">{pct}</span>
       },
     },
     {
