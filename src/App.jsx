@@ -134,21 +134,8 @@ function AppContent() {
     {
       accessorKey: 'citescore',
       header: 'CiteScore',
-      size: 96,
       filterFn: numericCompareFilter,
-      cell: ({ row }) => {
-        const cs = row.original.citescore
-        const pct = row.original.highest_percentile
-        if (cs == null) return <span className="text-text-muted">-</span>
-        return (
-          <div>
-            <span className="font-semibold text-text tabular-nums">{cs}</span>
-            {pct != null && (
-              <span className="ml-1.5 text-xs text-text-muted">P{pct}</span>
-            )}
-          </div>
-        )
-      },
+      meta: { hidden: true },
     },
     {
       accessorKey: 'h_index',
@@ -159,8 +146,21 @@ function AppContent() {
     {
       accessorKey: 'highest_percentile',
       header: 'Percentile',
+      size: 96,
       filterFn: numericCompareFilter,
-      meta: { hidden: true },
+      cell: ({ row }) => {
+        const pct = row.original.highest_percentile
+        const cs = row.original.citescore
+        if (pct == null) return <span className="text-text-muted">-</span>
+        return (
+          <div>
+            <span className="font-semibold text-text tabular-nums">{pct}</span>
+            {cs != null && (
+              <span className="ml-1.5 text-xs text-text-muted">CS {cs}</span>
+            )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: 'issn',
