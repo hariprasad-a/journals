@@ -9,15 +9,24 @@ import {
   getFacetedUniqueValues,
   flexRender,
 } from '@tanstack/react-table'
-import { rankItem } from '@tanstack/match-sorter-utils'
 import GlobalFilter from './GlobalFilter'
 import Pagination from './Pagination'
 
-const fuzzyFilter = (row, columnId, value, addMeta) => {
+const globalSearchFilter = (row, columnId, value) => {
   if (!value) return true
-  const itemRank = rankItem(row.getValue(columnId), value)
-  addMeta({ itemRank })
-  return itemRank.passed
+  const search = value.toLowerCase()
+  const title = String(row.getValue('Title') || '').toLowerCase()
+  if (title.includes(search)) return true
+  const publisher = String(row.original.Publisher || '').toLowerCase()
+  if (publisher.includes(search)) return true
+  const issnSearch = search.replace(/^issn\s*/i, '').replace(/[-\s]/g, '')
+  if (issnSearch) {
+    const issn = (row.original.issn || '').replace(/[-\s]/g, '').toLowerCase()
+    if (issn && issn.includes(issnSearch)) return true
+    const issnOnline = (row.original.issn_online || '').replace(/[-\s]/g, '').toLowerCase()
+    if (issnOnline && issnOnline.includes(issnSearch)) return true
+  }
+  return false
 }
 
 function SortIcon({ isSorted }) {
@@ -140,7 +149,7 @@ function MobileCard({ row, columns: visibleColumns, isExpanded, onToggle, render
 }
 
 export default function JournalTable({ data, columns, renderExpandedRow }) {
-  const [sorting, setSorting] = useState([])
+  const [sorting, setSorting] = useState([{ id: 'Title', desc: false }])
   const [globalFilter, setGlobalFilter] = useState('')
   const [columnFilters, setColumnFilters] = useState([])
   const [expandedRows, setExpandedRows] = useState({})
@@ -158,7 +167,7 @@ export default function JournalTable({ data, columns, renderExpandedRow }) {
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
-    globalFilterFn: fuzzyFilter,
+    globalFilterFn: globalSearchFilter,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
