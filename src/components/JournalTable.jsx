@@ -149,7 +149,7 @@ function MobileCard({ row, columns: visibleColumns, isExpanded, onToggle, render
 }
 
 export default function JournalTable({ data, columns, renderExpandedRow }) {
-  const [sorting, setSorting] = useState([{ id: 'Title', desc: false }])
+  const [sorting, setSorting] = useState([])
   const [globalFilter, setGlobalFilter] = useState('')
   const [columnFilters, setColumnFilters] = useState([])
   const [expandedRows, setExpandedRows] = useState({})
