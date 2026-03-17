@@ -49,6 +49,35 @@ function normalizeIssn(issn) {
   return (issn || '').trim().replace(/[-\s]/g, '')
 }
 
+// Split compound ASJC / SCImago area names into individual subjects
+// Split compound SCImago/ASJC area names into individual subjects.
+// ANZSRC FoR codes are intentionally excluded — those compound names are official field names.
+const SUBJECT_SPLIT_MAP = {
+  'Agricultural and Biological Sciences': ['Agricultural Sciences', 'Biological Sciences'],
+  'Arts and Humanities': ['Arts', 'Humanities'],
+  'Biochemistry, Genetics and Molecular Biology': ['Biochemistry', 'Genetics', 'Molecular Biology'],
+  'Business, Management and Accounting': ['Business', 'Management', 'Accounting'],
+  'Earth and Planetary Sciences': ['Earth Sciences', 'Planetary Sciences'],
+  'Economics, Econometrics and Finance': ['Economics', 'Econometrics', 'Finance'],
+  'Immunology and Microbiology': ['Immunology', 'Microbiology'],
+  'Pharmacology, Toxicology and Pharmaceutics': ['Pharmacology', 'Toxicology', 'Pharmaceutics'],
+  'Physics and Astronomy': ['Physics', 'Astronomy'],
+}
+
+function splitSubjects(areas) {
+  if (!Array.isArray(areas)) return areas
+  const result = new Set()
+  for (const area of areas) {
+    const mapped = SUBJECT_SPLIT_MAP[area]
+    if (mapped) {
+      mapped.forEach(s => result.add(s))
+    } else {
+      result.add(area)
+    }
+  }
+  return [...result]
+}
+
 // --- ABDC ---
 
 async function ensureAbdc() {
@@ -378,7 +407,7 @@ async function main() {
       entry.sjr = sci.sjr
       entry.sjr_quartile = sci.sjr_quartile
       entry.country = sci.country
-      entry.subject_area = sci.areas ? sci.areas.split(';').map(s => s.trim()).filter(Boolean) : null
+      entry.subject_area = splitSubjects(sci.areas ? sci.areas.split(';').map(s => s.trim()).filter(Boolean) : null)
       entry.categories = sci.categories
       entry.cites_per_doc_2yr = sci.cites_per_doc_2yr
       entry.total_citations_3yr = sci.total_citations_3yr
@@ -459,7 +488,7 @@ async function main() {
 
     // Use FoR name as subject_area fallback when Scopus/SCImago didn't provide one
     if (!entry.subject_area && entry.for_name) {
-      entry.subject_area = [entry.for_name]
+      entry.subject_area = splitSubjects([entry.for_name])
     }
 
     // Use ABDC ISSN as fallback, keep online ISSN too
@@ -521,7 +550,7 @@ async function main() {
         entry.sjr = sci.sjr
         entry.sjr_quartile = sci.sjr_quartile
         entry.country = sci.country
-        entry.subject_area = sci.areas ? sci.areas.split(';').map(s => s.trim()).filter(Boolean) : null
+        entry.subject_area = splitSubjects(sci.areas ? sci.areas.split(';').map(s => s.trim()).filter(Boolean) : null)
         entry.categories = sci.categories
         entry.cites_per_doc_2yr = sci.cites_per_doc_2yr
         entry.total_citations_3yr = sci.total_citations_3yr

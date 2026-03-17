@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useState, useMemo } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -18,6 +18,63 @@ const fuzzyFilter = (row, columnId, value, addMeta) => {
   const itemRank = rankItem(row.getValue(columnId), value)
   addMeta({ itemRank })
   return itemRank.passed
+}
+
+function SortIcon({ isSorted }) {
+  if (isSorted === 'asc') {
+    return <svg className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7"/></svg>
+  }
+  if (isSorted === 'desc') {
+    return <svg className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+  }
+  // Default: muted bi-directional arrow, always visible
+  return (
+    <svg className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5 5 5M7 13l5 5 5-5"/>
+    </svg>
+  )
+}
+
+function MobileSortBar({ table, columns }) {
+  const sortableColumns = useMemo(
+    () => columns.filter(c => !c.meta?.filterOnly && c.accessorKey !== 'subject_area'),
+    [columns]
+  )
+  const sorting = table.getState().sorting
+  const currentSort = sorting[0] || null
+
+  const handleChange = (e) => {
+    const val = e.target.value
+    if (!val) {
+      table.setSorting([])
+      return
+    }
+    const [id, dir] = val.split(':')
+    table.setSorting([{ id, desc: dir === 'desc' }])
+  }
+
+  const currentValue = currentSort ? `${currentSort.id}:${currentSort.desc ? 'desc' : 'asc'}` : ''
+
+  return (
+    <div className="flex items-center gap-2 px-4 py-2 bg-surface border-b border-border-light">
+      <svg className="w-4 h-4 text-text-muted flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/>
+      </svg>
+      <select
+        value={currentValue}
+        onChange={handleChange}
+        className="flex-1 text-xs bg-transparent text-text border-none focus:ring-0 p-0 cursor-pointer"
+      >
+        <option value="">Sort by...</option>
+        {sortableColumns.map(col => (
+          <Fragment key={col.accessorKey}>
+            <option value={`${col.accessorKey}:asc`}>{col.header} (Low to High)</option>
+            <option value={`${col.accessorKey}:desc`}>{col.header} (High to Low)</option>
+          </Fragment>
+        ))}
+      </select>
+    </div>
+  )
 }
 
 function MobileCard({ row, columns: visibleColumns, isExpanded, onToggle, renderExpandedRow }) {
@@ -139,32 +196,35 @@ export default function JournalTable({ data, columns, renderExpandedRow }) {
             <thead>
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="border-b border-border">
-                  {headerGroup.headers.map(header => (
-                    <th
-                      key={header.id}
-                      className="bg-surface-alt px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider first:rounded-tl-xl last:rounded-tr-xl"
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div>
-                          <div
-                            className={`flex items-center gap-1 ${header.column.getCanSort() ? 'cursor-pointer select-none hover:text-text' : ''}`}
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {header.column.getIsSorted() === 'asc' && (
-                              <svg className="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7"/></svg>
-                            )}
-                            {header.column.getIsSorted() === 'desc' && (
-                              <svg className="w-3.5 h-3.5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                  {headerGroup.headers.map(header => {
+                    const sorted = header.column.getIsSorted()
+                    return (
+                      <th
+                        key={header.id}
+                        className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider first:rounded-tl-xl last:rounded-tr-xl transition-colors ${sorted ? 'bg-primary-50/60 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300' : 'bg-surface-alt text-text-secondary'}`}
+                      >
+                        {header.isPlaceholder ? null : (
+                          <div>
+                            <div
+                              className={`flex items-center gap-1 ${header.column.getCanSort() ? 'cursor-pointer select-none group' : ''}`}
+                              onClick={header.column.getToggleSortingHandler()}
+                              title={header.column.getCanSort() ? 'Click to sort' : undefined}
+                            >
+                              {flexRender(header.column.columnDef.header, header.getContext())}
+                              {header.column.getCanSort() && (
+                                <span className={sorted ? '' : 'transition-opacity'}>
+                                  <SortIcon isSorted={sorted} />
+                                </span>
+                              )}
+                            </div>
+                            {header.column.getCanFilter() && header.column.columnDef.Filter && (
+                              <header.column.columnDef.Filter column={header.column} />
                             )}
                           </div>
-                          {header.column.getCanFilter() && header.column.columnDef.Filter && (
-                            <header.column.columnDef.Filter column={header.column} />
-                          )}
-                        </div>
-                      )}
-                    </th>
-                  ))}
+                        )}
+                      </th>
+                    )
+                  })}
                 </tr>
               ))}
             </thead>
@@ -216,6 +276,7 @@ export default function JournalTable({ data, columns, renderExpandedRow }) {
 
       {/* Mobile card list */}
       <div className="md:hidden bg-surface rounded-xl border border-border shadow-sm divide-y divide-border-light">
+        <MobileSortBar table={table} columns={visibleColumns} />
         {table.getRowModel().rows.map(row => (
           <MobileCard
             key={row.id}

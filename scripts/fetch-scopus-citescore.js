@@ -137,7 +137,7 @@ async function fetchCiteScore(issn, apiKey) {
   const reset = res.headers.get('X-RateLimit-Reset')
 
   if (res.status === 404) {
-    return { result: { not_found: true }, remaining }
+    return { result: { not_found: true }, remaining, reset }
   }
 
   if (res.status === 429) {
@@ -155,15 +155,15 @@ async function fetchCiteScore(issn, apiKey) {
   const data = await res.json()
   const entries = data['serial-metadata-response']?.entry
   if (!entries || entries.length === 0) {
-    return { result: { not_found: true }, remaining }
+    return { result: { not_found: true }, remaining, reset }
   }
 
   const entry = entries[0]
   if (entry.error) {
-    return { result: { not_found: true, error: entry.error }, remaining }
+    return { result: { not_found: true, error: entry.error }, remaining, reset }
   }
 
-  return { result: extractCiteScoreData(entry), remaining }
+  return { result: extractCiteScoreData(entry), remaining, reset }
 }
 
 async function main() {
@@ -259,7 +259,8 @@ async function main() {
 
           // Check remaining quota
           if (remaining != null && Number(remaining) < LOW_QUOTA_THRESHOLD) {
-            console.warn(`  Low quota remaining (${remaining}) — pausing ${LOW_QUOTA_PAUSE_MS / 1000}s`)
+            const resetInfo = reset ? ` — quota resets at ${new Date(Number(reset) * 1000).toLocaleString()}` : ''
+            console.warn(`  Low quota remaining (${remaining})${resetInfo} — pausing ${LOW_QUOTA_PAUSE_MS / 1000}s`)
             await sleep(LOW_QUOTA_PAUSE_MS)
           }
 
